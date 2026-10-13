@@ -71,27 +71,29 @@ describe("slide-on", () => {
     loopPosition: 6,
   };
 
-  it("derives the minimum loop length from the shoulder gap", () => {
+  it("derives the minimum loop length from the shoulder gap, assuming no gap when laced", () => {
     const r = calculate(base);
     expect(r.eyeletSpacing).toBeCloseTo(2.5, 6);
+    expect(r.crossingLength).toBeCloseTo(2.5, 9);
     expect(r.crossingCount).toBe(22);
-    expect(r.loopLength).toBeCloseTo(122.2076, 3);
-    expect(r.loopsLace).toBeCloseTo(488.8304, 3);
-    expect(r.totalLaceLength).toBeCloseTo(607.7432, 3);
-  });
-
-  it("the total is the lace needed with the corset fully open, plus the tails", () => {
-    const r = calculate(base);
+    expect(r.topBarLength).toBe(0);
+    expect(r.loopLength).toBeCloseTo((laceAtGap(13, 30, 25) - 22 * 2.5) / 4, 9);
     expect(r.totalLaceLength).toBeCloseTo(laceAtGap(13, 30, 25) + 30, 9);
   });
 
-  it("matches a tightening corset that uses the derived loop length", () => {
+  it("ignores the gap when laced", () => {
+    const a = calculate(base);
+    const b = calculate({ ...base, lacingGap: 9 });
+    expect(b).toEqual(a);
+  });
+
+  it("matches a tightening corset with zero gap that uses the derived loop length", () => {
     const s = calculate(base);
     const t = calculate({
       role: "tightening",
       eyeletsPerSide: 13,
       lacingLength: 30,
-      lacingGap: 3,
+      lacingGap: 0,
       tailLength: 15,
       loopPosition: 6,
       loopLength: s.loopLength,
@@ -99,26 +101,8 @@ describe("slide-on", () => {
     expect(t.totalLaceLength).toBeCloseTo(s.totalLaceLength, 9);
   });
 
-  it("no loop is needed when the shoulder gap equals the laced gap", () => {
-    const r = calculate({ ...base, shoulderGap: 3 });
-    expect(r.loopLength).toBe(0);
-  });
-
   it("never gives a negative loop length", () => {
-    const r = calculate({ ...base, shoulderGap: 1 });
-    expect(r.loopLength).toBe(0);
-  });
-
-  it("second example", () => {
-    const r = calculate({
-      ...base,
-      eyeletsPerSide: 10,
-      shoulderGap: 12,
-      tailLength: 10,
-      loopPosition: 5,
-    });
-    expect(r.loopLength).toBeCloseTo(34.1293, 3);
-    expect(r.totalLaceLength).toBeCloseTo(231.2698, 3);
+    expect(calculate({ ...base, shoulderGap: 0 }).loopLength).toBe(0);
   });
 });
 

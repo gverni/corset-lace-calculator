@@ -9,7 +9,7 @@ The lace can be on the **front or the back** of the corset. There are two uses. 
 
 Changes since v4:
 - Sliding on is laced like tightening, including the loops and the loop position.
-- Sliding on has two gaps: the gap when laced (worn) and the widest gap at the shoulders.
+- Sliding on has one gap: the widest gap at the shoulders. The gap when laced is **not asked**: there is a lot of spare lace, so it cannot be controlled. The calculation assumes the laced corset has no gap (0).
 - For sliding on, the loop length is calculated (minimum), not entered.
 - The diagram is the same for both uses.
 
@@ -70,7 +70,7 @@ Single page, `"use client"`.
 |---|---|---|
 | Eyelets per side | shown | shown |
 | Lacing length | shown | shown |
-| Gap when laced | shown | shown |
+| Gap when laced | shown | **hidden** (assumed 0) |
 | Gap at the shoulders | **hidden** | shown |
 | Loop length | shown (entered) | **hidden** (shown as a result instead) |
 | Loop position | shown | shown |
@@ -90,14 +90,14 @@ Switching the use keeps the values already typed. Hidden fields keep their value
 
 **Step 4: results** (live, no submit button)
 - Eyelet spacing and crossing length
-- Sliding on only: **"Minimum loop length"**, with the text "Each loop must be at least this long (visible length) so the corset can open to the shoulder gap."
+- Sliding on only: **"Minimum loop length"**, with the text "Each loop must be at least this long (visible length) so the corset can open to the shoulder gap. Worked out as if the corset is laced with no gap."
 - A breakdown, so the user can check it:
   - Top bar: `g`
   - Crossings: count x crossing length
   - Loops: `4 x loop length`
   - Tails: `2 x tail length`
 - **Total lace length** in bold, with the other unit in smaller text, for example `170.0 cm (66.9 in)`
-- Sliding on only: an **information line**, not a warning (neutral style, no red or amber, no warning icon). For example: "When the corset is laced, each loop will be about 122.2 cm long (visible length)." Show it next to the minimum loop length, in the current unit.
+- Sliding on only: an **information line**, not a warning (neutral style, no red or amber, no warning icon). For example: "When the corset is laced, each loop will be about 130.7 cm long (visible length), if it is laced with no gap." Show it next to the minimum loop length, in the current unit.
 
 **Step 5: threading**
 - The generated SVG diagram (section 7)
@@ -123,10 +123,10 @@ laceAt(gap)    = gap + crossings x sqrt(eyeletSpacing^2 + gap^2)     (top bar + 
 totalLaceLength = laceAt(lacingGap) + 4 x loopLength + 2 x tailLength
 ```
 
-**Sliding on** (loop length calculated). The lace has a fixed length. With the corset fully open at the shoulder gap, the loops are used up. When it is worn at the laced gap, the lace that is no longer needed becomes the loops:
+**Sliding on** (loop length calculated). The lace has a fixed length. With the corset fully open at the shoulder gap, the loops are used up. When it is worn, the lace that is no longer needed becomes the loops. The gap when laced is not an input: it is assumed to be 0 (so each crossing is as long as the eyelet spacing, and there is no top bar):
 ```
-loopLength      = max(0, (laceAt(shoulderGap) - laceAt(lacingGap)) / 4)     (the minimum)
-totalLaceLength = laceAt(lacingGap) + 4 x loopLength + 2 x tailLength
+loopLength      = max(0, (laceAt(shoulderGap) - laceAt(0)) / 4)     (the minimum)
+totalLaceLength = laceAt(0) + 4 x loopLength + 2 x tailLength
                 = laceAt(shoulderGap) + 2 x tailLength
 ```
 
@@ -144,11 +144,11 @@ So the total for sliding on is the lace needed with the corset fully open, plus 
 
 - **Crossing count.** Follow one end of the lace from the top. With the loop pair at k and k+1 it makes `k - 1` diagonals above the loop and `n - k - 1` below it, so `n - 2` per end, whatever k is. Two ends give `2(n - 2)`. The unit tests check that the diagram draws exactly this many crossings, for several loop positions.
 - **Loop lace.** Each loop is a doubled strand (out and back), and there are two loops, so `4 x loop length`.
-- **Sliding on.** A test checks that a tightening corset given the calculated loop length has exactly the same total lace length. Another test checks that the total equals `laceAt(shoulderGap)` plus the tails.
+- **Sliding on.** A test checks that the laced gap is ignored. Another test checks that the total equals `laceAt(shoulderGap)` plus the tails.
 - **Examples** (computed independently and checked by the tests):
   - Tightening, n = 15, D = 33, g = 2.5, loop = 12, tail = 15: spacing 2.357, crossing 3.436, 26 crossings, total **169.8 cm**
-  - Sliding on, n = 13, D = 30, g = 3, shoulder gap = 25, tail = 15: minimum loop length **122.2 cm**, total **607.7 cm**
-  - Sliding on, n = 10, D = 30, g = 3, shoulder gap = 12, tail = 10: minimum loop length **34.1 cm**, total **231.3 cm**
+  - Sliding on, n = 13, D = 30, shoulder gap = 25, tail = 15: minimum loop length **130.7 cm**, total **607.7 cm**
+  - Sliding on, n = 10, D = 30, shoulder gap = 12, tail = 10: minimum loop length **39.5 cm**, total **231.3 cm**
 - The total does not depend on the loop position (there is a test for this).
 - All code in this spec was run: 19 Vitest tests pass, and the TypeScript compiles in strict mode.
 
@@ -303,20 +303,23 @@ export function laceAtGap(n: number, lacingLength: number, gap: number): number 
 
 /** All lengths in cm. No rounding: round only when displaying. */
 export function calculate(input: LaceInput): LaceResult {
-  const { role, eyeletsPerSide: n, lacingLength: D, lacingGap: g, tailLength } = input;
+  const { role, eyeletsPerSide: n, lacingLength: D, tailLength } = input;
+  // Sliding on: the laced gap cannot be controlled (there is a lot of spare lace), so the
+  // laced corset is assumed to have no gap. The input lacingGap is ignored.
+  const g = role === "slide-on" ? 0 : input.lacingGap;
 
   const eyeletSpacing = D / (n - 1);
   const crossingLength = Math.hypot(eyeletSpacing, g);
   const count = crossingCount(n);
 
   // The lace has a fixed length. With the corset fully open (shoulder gap) the loops are used
-  // up. When it is worn (laced gap) the lace that is no longer needed becomes the loops.
+  // up. When it is worn (assumed gap 0) the lace that is no longer needed becomes the loops.
   const loopLength =
     role === "tightening"
       ? (input.loopLength ?? 0)
       : Math.max(
           0,
-          (laceAtGap(n, D, input.shoulderGap ?? g) - laceAtGap(n, D, g)) / 4
+          (laceAtGap(n, D, input.shoulderGap ?? 0) - laceAtGap(n, D, g)) / 4
         );
 
   const topBarLength = g;
@@ -513,8 +516,8 @@ export function renderThreadingSvg(m: ThreadingModel): string {
 ## 9. Validation
 
 - `eyeletsPerSide`: whole number, 2 or more (the loop needs a pair of eyelets)
-- `lacingLength`, `lacingGap`: numbers greater than 0
-- `shoulderGap` (sliding on): number greater than 0 and **at least** `lacingGap`. Message: "The shoulder gap must be at least the gap when laced."
+- `lacingLength`: number greater than 0. `lacingGap` (tightening only): number greater than 0. Not asked or checked when sliding on.
+- `shoulderGap` (sliding on): number greater than 0
 - `tailLength`: number of 0 or more
 - `loopLength` (tightening): number of 0 or more
 - `loopPosition`: whole number from 1 to `eyeletsPerSide - 1`. If n changes and the value becomes invalid, clamp it.
@@ -600,54 +603,22 @@ describe("slide-on", () => {
     loopPosition: 6,
   };
 
-  it("derives the minimum loop length from the shoulder gap", () => {
+  it("derives the minimum loop length from the shoulder gap, assuming no gap when laced", () => {
     const r = calculate(base);
     expect(r.eyeletSpacing).toBeCloseTo(2.5, 6);
+    expect(r.crossingLength).toBeCloseTo(2.5, 9);
     expect(r.crossingCount).toBe(22);
-    expect(r.loopLength).toBeCloseTo(122.2076, 3);
-    expect(r.loopsLace).toBeCloseTo(488.8304, 3);
-    expect(r.totalLaceLength).toBeCloseTo(607.7432, 3);
-  });
-
-  it("the total is the lace needed with the corset fully open, plus the tails", () => {
-    const r = calculate(base);
+    expect(r.topBarLength).toBe(0);
+    expect(r.loopLength).toBeCloseTo((laceAtGap(13, 30, 25) - 22 * 2.5) / 4, 9);
     expect(r.totalLaceLength).toBeCloseTo(laceAtGap(13, 30, 25) + 30, 9);
   });
 
-  it("matches a tightening corset that uses the derived loop length", () => {
-    const s = calculate(base);
-    const t = calculate({
-      role: "tightening",
-      eyeletsPerSide: 13,
-      lacingLength: 30,
-      lacingGap: 3,
-      tailLength: 15,
-      loopPosition: 6,
-      loopLength: s.loopLength,
-    });
-    expect(t.totalLaceLength).toBeCloseTo(s.totalLaceLength, 9);
-  });
-
-  it("no loop is needed when the shoulder gap equals the laced gap", () => {
-    const r = calculate({ ...base, shoulderGap: 3 });
-    expect(r.loopLength).toBe(0);
+  it("ignores the gap when laced", () => {
+    expect(calculate({ ...base, lacingGap: 9 })).toEqual(calculate(base));
   });
 
   it("never gives a negative loop length", () => {
-    const r = calculate({ ...base, shoulderGap: 1 });
-    expect(r.loopLength).toBe(0);
-  });
-
-  it("second example", () => {
-    const r = calculate({
-      ...base,
-      eyeletsPerSide: 10,
-      shoulderGap: 12,
-      tailLength: 10,
-      loopPosition: 5,
-    });
-    expect(r.loopLength).toBeCloseTo(34.1293, 3);
-    expect(r.totalLaceLength).toBeCloseTo(231.2698, 3);
+    expect(calculate({ ...base, shoulderGap: 0 }).loopLength).toBe(0);
   });
 });
 
@@ -738,6 +709,6 @@ Decided:
 - Sliding on is laced exactly like tightening. Only the way it is worn differs.
 - For sliding on, the loop length is the minimum that lets the corset open to the shoulder gap. It is calculated, not entered.
 
-- With a wide shoulder gap the minimum loop length is very long (about 122 cm in the first sliding-on example). This is expected and confirmed on real corsets: the lace must be long enough for the open corset, so there is no other way to do it. The app shows the loop length as plain information (section 3, step 4), not as a warning.
+- With a wide shoulder gap the minimum loop length is very long (about 131 cm in the first sliding-on example). This is expected and confirmed on real corsets: the lace must be long enough for the open corset, so there is no other way to do it. The app shows the loop length as plain information (section 3, step 4), not as a warning.
 
 Open questions: none at the moment.

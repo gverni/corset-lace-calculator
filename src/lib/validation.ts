@@ -24,14 +24,13 @@ export interface Validation {
 export function visibleFields(role: LaceRole): FieldKey[] {
   return role === "tightening"
     ? ["eyeletsPerSide", "lacingLength", "lacingGap", "loopPosition", "loopLength", "tailLength"]
-    : ["eyeletsPerSide", "lacingLength", "lacingGap", "shoulderGap", "loopPosition", "tailLength"];
+    : ["eyeletsPerSide", "lacingLength", "shoulderGap", "loopPosition", "tailLength"];
 }
 
 const MSG = {
   eyelets: "Enter a whole number, 2 or more.",
   positive: "Enter a number greater than 0.",
   nonNegative: "Enter a number, 0 or more.",
-  shoulder: "The shoulder gap must be at least the gap when laced.",
 } as const;
 
 export function validate(role: LaceRole, raw: RawFields): Validation {
@@ -43,8 +42,11 @@ export function validate(role: LaceRole, raw: RawFields): Validation {
   const lacingLength = parseNumber(raw.lacingLength);
   if (lacingLength === undefined || lacingLength <= 0) errors.lacingLength = MSG.positive;
 
-  const lacingGap = parseNumber(raw.lacingGap);
-  if (lacingGap === undefined || lacingGap <= 0) errors.lacingGap = MSG.positive;
+  // Not used when sliding on (the laced gap is assumed to be 0).
+  const lacingGap = role === "slide-on" ? 0 : parseNumber(raw.lacingGap);
+  if (lacingGap === undefined || lacingGap <= 0) {
+    if (role !== "slide-on") errors.lacingGap = MSG.positive;
+  }
 
   const tailLength = parseNumber(raw.tailLength);
   if (tailLength === undefined) errors.tailLength = MSG.nonNegative;
@@ -66,8 +68,6 @@ export function validate(role: LaceRole, raw: RawFields): Validation {
     shoulderGap = parseNumber(raw.shoulderGap);
     if (shoulderGap === undefined || shoulderGap <= 0) {
       errors.shoulderGap = MSG.positive;
-    } else if (lacingGap !== undefined && lacingGap > 0 && shoulderGap < lacingGap) {
-      errors.shoulderGap = MSG.shoulder;
     }
   } else {
     loopLength = parseNumber(raw.loopLength);

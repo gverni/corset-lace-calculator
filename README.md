@@ -5,7 +5,7 @@ Works out how much lace a corset needs, and shows how to thread it.
 Two uses:
 
 - **Tightening**: the corset has another opening (a zip, for example). You enter the loop length.
-- **Sliding on**: the lace is the only opening. You enter the widest gap at the shoulders, and the app calculates the minimum loop length.
+- **Sliding on**: the lace is the only opening. You enter the widest gap at the shoulders, and the app calculates the minimum loop length. It assumes the laced corset has no gap, so the laced gap is not asked.
 
 Measure eyelet distances from centre to centre. Lengths work in cm or inches.
 

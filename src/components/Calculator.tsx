@@ -69,15 +69,17 @@ export default function Calculator() {
                 error={errors.lacingLength}
                 unit={unit}
               />
-              <Field
-                id="lacingGap"
-                label="Gap when laced"
-                help="Distance between the centres of two facing eyelets when the corset is laced."
-                value={fields.lacingGap}
-                onChange={setField("lacingGap")}
-                error={errors.lacingGap}
-                unit={unit}
-              />
+              {!slideOn ? (
+                <Field
+                  id="lacingGap"
+                  label="Gap when laced"
+                  help="Distance between the centres of two facing eyelets when the corset is laced."
+                  value={fields.lacingGap}
+                  onChange={setField("lacingGap")}
+                  error={errors.lacingGap}
+                  unit={unit}
+                />
+              ) : null}
               {slideOn ? (
                 <Field
                   id="shoulderGap"

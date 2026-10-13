@@ -126,10 +126,11 @@ describe("validate", () => {
     );
   });
 
-  it("the shoulder gap must be at least the gap when laced", () => {
-    const msg = "The shoulder gap must be at least the gap when laced.";
-    expect(validate("slide-on", { ...defaultFields(), lacingGap: "5", shoulderGap: "4" }).errors.shoulderGap).toBe(msg);
-    expect(validate("slide-on", { ...defaultFields(), lacingGap: "5", shoulderGap: "5" }).errors).toEqual({});
+  it("sliding on does not need the gap when laced", () => {
+    expect(validate("slide-on", { ...defaultFields(), lacingGap: "" }).errors).toEqual({});
+    expect(validate("slide-on", { ...defaultFields(), shoulderGap: "0" }).errors.shoulderGap).toBe(
+      "Enter a number greater than 0."
+    );
   });
 
   it("the loop position must be a whole number from 1 to n - 1", () => {
@@ -162,7 +163,7 @@ describe("compute", () => {
   it("default values, slide-on", () => {
     const v = validate("slide-on", defaultFields()).values as ParsedFields;
     const r = compute("slide-on", "cm", v);
-    expect(r.loopLength).toBeCloseTo(110.9697, 3);
+    expect(r.loopLength).toBeCloseTo(118.3552, 3);
     expect(r.totalLaceLength).toBeCloseTo(557.9664, 3);
   });
 

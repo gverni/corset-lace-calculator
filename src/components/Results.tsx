@@ -28,7 +28,7 @@ export function Results({ role, unit, result }: ResultsProps) {
             <dt className="text-ink-soft">Minimum loop length</dt>
             <dd className="num mt-0.5 text-base">{f(result.loopLength)}</dd>
             <dd className="mt-1 leading-snug text-ink-soft">
-              Each loop must be at least this long (visible length) so the corset can open to the shoulder gap.
+              Each loop must be at least this long (visible length) so the corset can open to the shoulder gap. Worked out as if the corset is laced with no gap.
             </dd>
           </div>
         ) : null}
@@ -43,7 +43,9 @@ export function Results({ role, unit, result }: ResultsProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-chalk-soft border-y border-chalk-soft">
-          <Row name="Top bar" calc="Straight piece across the top eyelets" value={f(result.topBarLength)} />
+          {slideOn ? null : (
+            <Row name="Top bar" calc="Straight piece across the top eyelets" value={f(result.topBarLength)} />
+          )}
           <Row name="Crossings" calc={`${result.crossingCount} × ${f(result.crossingLength)}`} value={f(result.crossingCount * result.crossingLength)} />
           <Row name="Loops" calc={`4 × ${f(result.loopLength)}`} value={f(result.loopsLace)} />
           <Row name="Ends" calc={`2 × ${f(result.tailsLace / 2)}`} value={f(result.tailsLace)} />
@@ -67,7 +69,7 @@ export function Results({ role, unit, result }: ResultsProps) {
 
       {slideOn ? (
         <p className="mt-5 border-l-2 border-accent bg-accent-soft px-3 py-2 text-sm leading-snug">
-          When the corset is laced, each loop will be about <span className="num font-medium">{f(result.loopLength)}</span> long (visible length).
+          When the corset is laced, each loop will be about <span className="num font-medium">{f(result.loopLength)}</span> long (visible length), if it is laced with no gap.
         </p>
       ) : null}
     </section>

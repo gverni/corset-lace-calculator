@@ -25,7 +25,7 @@ export interface LaceInput {
   loopPosition: number;
   /** cm: visible length of one loop. Tightening only */
   loopLength?: number;
-  /** cm: widest gap that still lets the corset slide on. Slide-on only, at least lacingGap */
+  /** cm: widest gap that still lets the corset slide on. Slide-on only */
   shoulderGap?: number;
 }
 
@@ -73,20 +73,23 @@ export function laceAtGap(n: number, lacingLength: number, gap: number): number 
 
 /** All lengths in cm. No rounding: round only when displaying. */
 export function calculate(input: LaceInput): LaceResult {
-  const { role, eyeletsPerSide: n, lacingLength: D, lacingGap: g, tailLength } = input;
+  const { role, eyeletsPerSide: n, lacingLength: D, tailLength } = input;
+  // Sliding on: the laced gap cannot be controlled (there is a lot of spare lace), so the
+  // laced corset is assumed to have no gap. The input lacingGap is ignored.
+  const g = role === "slide-on" ? 0 : input.lacingGap;
 
   const eyeletSpacing = D / (n - 1);
   const crossingLength = Math.hypot(eyeletSpacing, g);
   const count = crossingCount(n);
 
   // The lace has a fixed length. With the corset fully open (shoulder gap) the loops are used
-  // up. When it is worn (laced gap) the lace that is no longer needed becomes the loops.
+  // up. When it is worn (assumed gap 0) the lace that is no longer needed becomes the loops.
   const loopLength =
     role === "tightening"
       ? (input.loopLength ?? 0)
       : Math.max(
           0,
-          (laceAtGap(n, D, input.shoulderGap ?? g) - laceAtGap(n, D, g)) / 4
+          (laceAtGap(n, D, input.shoulderGap ?? 0) - laceAtGap(n, D, g)) / 4
         );
 
   const topBarLength = g;
