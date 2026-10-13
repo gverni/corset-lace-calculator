@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f4f6f8;
+  --color-panel: #ffffff;
+  --color-ink: #1d2733;
+  --color-ink-soft: #566574;
+  --color-chalk: #cfd9e3;
+  --color-chalk-soft: #e6ecf1;
+  --color-accent: #245b86;
+  --color-accent-soft: #e4eef6;
+  --color-danger: #a1262b;
+  /* Same colours as the In and Out marks in the threading diagram. */
+  --color-pass-in: #0f766e;
+  --color-pass-out: #6d28d9;
+
+  --font-serif: "Newsreader Variable", Georgia, "Times New Roman", serif;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Figures line up in columns. */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.diagram svg {
+  display: block;
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
